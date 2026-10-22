@@ -1,0 +1,311 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public profile details of a Chithighor user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "displayName": { "type": "string", "maxLength": 80 },
+        "username": { "type": "string", "maxLength": 50, "pattern": "^[a-zA-Z0-9_]+$" },
+        "bio": { "type": "string", "maxLength": 300 },
+        "avatarStyle": { "type": "string", "maxLength": 50 },
+        "lettersCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "displayName", "username"]
+    },
+    "UserPrivateInfo": {
+      "title": "UserPrivateInfo",
+      "description": "Private contact details and roles for user",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "realName": { "type": "string", "maxLength": 100 },
+        "phone": { "type": "string", "maxLength": 30 },
+        "defaultShippingAddress": { "type": "string", "maxLength": 300 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Registry of system administrators",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 150 },
+        "grantedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email"]
+    },
+    "Letter": {
+      "title": "Letter",
+      "description": "A digital letter written on Chithighor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 150 },
+        "content": { "type": "string", "maxLength": 10000 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "isAnonymous": { "type": "boolean" },
+        "recipientType": { "type": "string", "enum": ["public", "username", "link_only"] },
+        "recipientUsername": { "type": "string", "maxLength": 50 },
+        "visibility": { "type": "string", "enum": ["public", "unlisted", "private"] },
+        "category": { "type": "string", "enum": ["love", "heartbreak", "family", "friendship", "life_stories", "poetry", "anonymous", "apology", "memories", "motivation", "unsent", "general"] },
+        "paperStyle": { "type": "string", "maxLength": 60 },
+        "fontFamily": { "type": "string", "maxLength": 50 },
+        "envelopeColor": { "type": "string", "maxLength": 60 },
+        "waxSeal": { "type": "string", "maxLength": 50 },
+        "stampStyle": { "type": "string", "maxLength": 50 },
+        "reactions": { "type": "object" },
+        "viewsCount": { "type": "number" },
+        "savesCount": { "type": "number" },
+        "isDraft": { "type": "boolean" },
+        "isReported": { "type": "boolean" },
+        "isModerated": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "content", "authorId", "authorName", "visibility", "category"]
+    },
+    "Reaction": {
+      "title": "Reaction",
+      "description": "A heart or emotional reaction to a letter",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "reactionType": { "type": "string", "enum": ["heart", "crying", "hug", "rose", "feather"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "reactionType"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Public or warm response to an open letter",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "letterId": { "type": "string", "maxLength": 128 },
+        "authorId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "content": { "type": "string", "maxLength": 1500 },
+        "isAnonymous": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "letterId", "authorId", "authorName", "content"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "Saved letter in user's private collection",
+      "type": "object",
+      "properties": {
+        "letterId": { "type": "string", "maxLength": 128 },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["letterId"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "Content moderation flag",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "targetType": { "type": "string", "enum": ["letter", "comment", "user"] },
+        "targetId": { "type": "string", "maxLength": 128 },
+        "reportedBy": { "type": "string", "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 100 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["pending", "resolved", "dismissed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "targetType", "targetId", "reportedBy", "reason"]
+    },
+    "PhysicalOrder": {
+      "title": "PhysicalOrder",
+      "description": "Physical keepsake letter printing and postal delivery order",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "letterTitle": { "type": "string", "maxLength": 150 },
+        "letterContent": { "type": "string", "maxLength": 10000 },
+        "paperStyle": { "type": "string", "maxLength": 60 },
+        "envelopeColor": { "type": "string", "maxLength": 60 },
+        "waxSeal": { "type": "string", "maxLength": 50 },
+        "packageType": { "type": "string", "enum": ["standard", "vintage_wax_box", "keepsake_deluxe"] },
+        "priceBdt": { "type": "number" },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "senderAddress": { "type": "string", "maxLength": 300 },
+        "senderPhone": { "type": "string", "maxLength": 30 },
+        "recipientName": { "type": "string", "maxLength": 100 },
+        "recipientPhone": { "type": "string", "maxLength": 30 },
+        "recipientAddress": { "type": "string", "maxLength": 300 },
+        "district": { "type": "string", "maxLength": 60 },
+        "postalCode": { "type": "string", "maxLength": 20 },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "processing", "dispatched", "delivered", "cancelled"] },
+        "trackingNumber": { "type": "string", "maxLength": 50 },
+        "paymentStatus": { "type": "string", "enum": ["unpaid", "mock_verified", "paid"] },
+        "paymentMethod": { "type": "string", "maxLength": 50 },
+        "paymentTxId": { "type": "string", "maxLength": 100 },
+        "notes": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "letterTitle", "letterContent", "recipientName", "recipientPhone", "recipientAddress", "district"]
+    },
+    "DeliveryPackage": {
+      "title": "DeliveryPackage",
+      "description": "Admin configurable delivery package tier and pricing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "name": { "type": "string", "maxLength": 100 },
+        "nameBn": { "type": "string", "maxLength": 100 },
+        "priceBdt": { "type": "number" },
+        "estimatedDays": { "type": "string", "maxLength": 50 },
+        "features": { "type": "array" },
+        "active": { "type": "boolean" }
+      },
+      "required": ["id", "name", "priceBdt"]
+    },
+    "StationeryTemplate": {
+      "title": "StationeryTemplate",
+      "description": "Digital letter envelope and paper style designs with pricing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "type": { "type": "string", "enum": ["envelope", "paper", "font"] },
+        "templateId": { "type": "string", "maxLength": 60 },
+        "name": { "type": "string", "maxLength": 100 },
+        "nameBn": { "type": "string", "maxLength": 100 },
+        "description": { "type": "string", "maxLength": 300 },
+        "descriptionBn": { "type": "string", "maxLength": 300 },
+        "isFree": { "type": "boolean" },
+        "priceBdt": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "badge": { "type": "string", "enum": ["featured", "new", "popular", "none"] },
+        "previewColorPrimary": { "type": "string", "maxLength": 50 },
+        "previewColorSecondary": { "type": "string", "maxLength": 50 },
+        "displayOrder": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "templateId", "name", "priceBdt"]
+    },
+    "TemplatePurchase": {
+      "title": "TemplatePurchase",
+      "description": "Purchase request and bKash/Nagad verification records for premium letter paper/envelope",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "userUsername": { "type": "string", "maxLength": 80 },
+        "userDisplayName": { "type": "string", "maxLength": 100 },
+        "templateId": { "type": "string", "maxLength": 80 },
+        "templateName": { "type": "string", "maxLength": 100 },
+        "templateType": { "type": "string", "enum": ["paper", "envelope", "font"] },
+        "amountBdt": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["bKash", "Nagad"] },
+        "senderPhone": { "type": "string", "maxLength": 30 },
+        "transactionId": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "rejectionReason": { "type": "string", "maxLength": 300 },
+        "approvedBy": { "type": "string", "maxLength": 150 },
+        "approvedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "templateId", "amountBdt", "paymentMethod", "transactionId", "status"]
+    },
+    "UserTemplateAccess": {
+      "title": "UserTemplateAccess",
+      "description": "Registry of unlocked premium stationery templates for a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 200 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "templateId": { "type": "string", "maxLength": 80 },
+        "purchaseId": { "type": "string", "maxLength": 100 },
+        "unlockedAt": { "type": "string", "format": "date-time" },
+        "grantedBy": { "type": "string", "maxLength": 150 }
+      },
+      "required": ["id", "userId", "templateId"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "description": "System-wide administrative configuration for payment accounts and stationery defaults",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 50 },
+        "bkashMerchantNumber": { "type": "string", "maxLength": 30 },
+        "nagadMerchantNumber": { "type": "string", "maxLength": 30 },
+        "paymentInstructions": { "type": "string", "maxLength": 2000 },
+        "supportContact": { "type": "string", "maxLength": 200 },
+        "defaultPremiumPriceBdt": { "type": "number" },
+        "isMaintenanceMode": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 150 }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public profile details of a user"
+    },
+    "/users/{userId}/private/info": {
+      "schema": { "$ref": "#/entities/UserPrivateInfo" },
+      "description": "Private contact info and authorization roles"
+    },
+    "/admins/{userId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Authorized administrators"
+    },
+    "/letters/{letterId}": {
+      "schema": { "$ref": "#/entities/Letter" },
+      "description": "Digital letters (public community, unlisted, or private)"
+    },
+    "/letters/{letterId}/reactions/{userId}": {
+      "schema": { "$ref": "#/entities/Reaction" },
+      "description": "User reactions to a specific letter"
+    },
+    "/letters/{letterId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/Comment" },
+      "description": "Comments left on a letter"
+    },
+    "/users/{userId}/bookmarks/{letterId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "User bookmarked letters"
+    },
+    "/reports/{reportId}": {
+      "schema": { "$ref": "#/entities/Report" },
+      "description": "Moderation reports submitted by users"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/PhysicalOrder" },
+      "description": "Physical handwritten/printed letter delivery orders"
+    },
+    "/delivery_packages/{packageId}": {
+      "schema": { "$ref": "#/entities/DeliveryPackage" },
+      "description": "Physical delivery package tiers"
+    },
+    "/stationery_templates/{templateId}": {
+      "schema": { "$ref": "#/entities/StationeryTemplate" },
+      "description": "Digital letter envelopes and paper templates with admin pricing"
+    },
+    "/template_purchases/{purchaseId}": {
+      "schema": { "$ref": "#/entities/TemplatePurchase" },
+      "description": "Premium letter paper and envelope purchase verification requests"
+    },
+    "/user_template_access/{accessId}": {
+      "schema": { "$ref": "#/entities/UserTemplateAccess" },
+      "description": "User unlocked stationery templates access mapping"
+    },
+    "/app_settings/{settingId}": {
+      "schema": { "$ref": "#/entities/AppSettings" },
+      "description": "Site-wide payment instructions and merchant settings"
+    }
+  }
+}

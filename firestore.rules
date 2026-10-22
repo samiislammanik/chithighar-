@@ -1,0 +1,218 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'manikmia2049@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isLetterOwner(data) {
+      return (data.authorId == request.auth.uid || data.ownerUid == request.auth.uid);
+    }
+
+    // User Public Profiles
+    match /users/{userId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.auth.uid == userId &&
+        isValidId(userId) &&
+        incoming().id == userId &&
+        incoming().displayName is string && incoming().displayName.size() <= 80 &&
+        incoming().username is string && incoming().username.size() <= 50;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin()) &&
+        incoming().id == existing().id &&
+        incoming().displayName is string && incoming().displayName.size() <= 80;
+      allow delete: if isAdmin();
+
+      // Private User Info & PII (Split Collection strategy)
+      match /private/info {
+        allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      }
+
+      // User Bookmarks
+      match /bookmarks/{letterId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+    }
+
+    // Admins registry
+    match /admins/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Letters Collection
+    match /letters/{letterId} {
+      // Direct get access:
+      // Public & unlisted letters can be read by anyone; private only by author, designated recipient, or admin
+      allow get: if (resource.data.visibility != 'private') ||
+        (isSignedIn() && (isLetterOwner(resource.data) || resource.data.recipientUsername == request.auth.uid)) ||
+        isAdmin();
+
+      // List query security:
+      // Prevent unauthenticated query scraping of private letters or drafts
+      allow list: if (resource.data.visibility == 'public' && resource.data.isDraft == false) ||
+        (isSignedIn() && isLetterOwner(resource.data)) ||
+        isAdmin();
+
+      // Letter Creation
+      allow create: if isSignedIn() && isValidId(letterId) &&
+        incoming().id == letterId &&
+        isLetterOwner(incoming()) &&
+        incoming().title is string && incoming().title.size() <= 150 &&
+        incoming().category is string &&
+        incoming().visibility in ['public', 'unlisted', 'private'];
+
+      // Letter Updates: Author can edit content if not moderated, or anyone can update reactions/views counters
+      allow update: if (
+        isAdmin() ||
+        (
+          isSignedIn() &&
+          isLetterOwner(existing()) &&
+          isLetterOwner(incoming()) &&
+          existing().isModerated != true &&
+          incoming().title is string && incoming().title.size() <= 150
+        ) ||
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly(['reactions', 'viewsCount', 'savesCount'])
+        )
+      );
+
+      // Letter Deletion: author or admin
+      allow delete: if isSignedIn() && (isLetterOwner(resource.data) || isAdmin());
+
+      // Reactions Subcollection
+      match /reactions/{userId} {
+        allow read: if true;
+        allow create, update, delete: if isSignedIn() && request.auth.uid == userId;
+      }
+
+      // Comments Subcollection
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn() &&
+          incoming().authorId == request.auth.uid &&
+          incoming().letterId == letterId &&
+          incoming().content is string && incoming().content.size() <= 1500;
+        allow update, delete: if isSignedIn() && (resource.data.authorId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Moderation Reports
+    match /reports/{reportId} {
+      allow create: if isSignedIn() && isValidId(reportId) && incoming().reportedBy == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Physical Keepsake Orders (High PII protection: recipient address & phone)
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(orderId) &&
+        incoming().userId == request.auth.uid &&
+        incoming().recipientName is string && incoming().recipientName.size() <= 100 &&
+        incoming().recipientAddress is string && incoming().recipientAddress.size() <= 300 &&
+        incoming().recipientPhone is string && incoming().recipientPhone.size() <= 30;
+      allow update: if isAdmin() || (
+        isSignedIn() &&
+        resource.data.userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['notes', 'paymentTxId', 'paymentMethod'])
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Delivery Packages config
+    match /delivery_packages/{packageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Stationery Templates (Envelopes and Paper styles configured by Admin)
+    match /stationery_templates/{templateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /letterTemplates/{templateId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Premium Template Purchase Verification Requests (bKash & Nagad)
+    match /template_purchases/{purchaseId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Users can only submit Pending purchases for their own user ID
+      allow create: if isSignedIn() && isValidId(purchaseId) &&
+        incoming().userId == request.auth.uid &&
+        incoming().status == 'pending' &&
+        incoming().amountBdt is number &&
+        incoming().transactionId is string && incoming().transactionId.size() > 0 && incoming().transactionId.size() <= 100 &&
+        incoming().paymentMethod in ['bKash', 'Nagad'];
+      // Only Admin can approve or reject purchases
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    match /templatePurchases/{purchaseId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(purchaseId) &&
+        incoming().userId == request.auth.uid &&
+        incoming().status == 'pending' &&
+        incoming().amountBdt is number &&
+        incoming().transactionId is string && incoming().transactionId.size() > 0 && incoming().transactionId.size() <= 100 &&
+        incoming().paymentMethod in ['bKash', 'Nagad'];
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // User Unlocked Template Access Mapping
+    match /user_template_access/{accessId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      // Only administrators can grant or revoke unlock access
+      allow write: if isAdmin();
+    }
+    match /userTemplateAccess/{accessId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Site-wide Application Settings (Merchant Numbers, Instructions, Pricing defaults)
+    match /app_settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /appSettings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Chithighor (চিঠিঘর) - Digital & Physical Letters",
+  "description": "কিছু কথা চিঠিতেই সুন্দর — Anonymous & heartfelt digital letters, warm nostalgic community, and physical keepsake delivery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background-color: #FAF7F2;
+    color: #2C241E;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Noto Serif Bengali', 'Playfair Display', Georgia, serif;
+  }
+}
+
+.font-serif {
+  font-family: 'Noto Serif Bengali', 'Playfair Display', Georgia, serif;
+}
+
+.font-sans {
+  font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.font-handwriting {
+  font-family: 'Kalam', 'Caveat', cursive;
+}
+
+/* Vintage paper subtle texture pattern */
+.bg-parchment {
+  background-color: #FAF4E8;
+  background-image: radial-gradient(#d6c2a5 0.5px, transparent 0.5px), radial-gradient(#d6c2a5 0.5px, #FAF4E8 0.5px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8CCBA;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #801D2E;
+}
+
+@media print {
+  header, footer, button, nav {
+    display: none !important;
+  }
+  #printable-letter {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+}
